@@ -1,0 +1,19 @@
+from homeassistant.const import Platform
+
+DOMAIN = "onntrack"
+# Keep in sync with the version in manifest.json: it goes into the
+# User-Agent that Nominatim requires for identification.
+VERSION = "0.7.1"
+SERVICE_GET_ROUTE = "get_route"
+EVENT_ALERT = "onntrack_alert"
+EVENT_STATUS_CHANGED = "onntrack_status_changed"
+DEFAULT_BASE_URL = "https://platform.onntrack.nl"
+DEFAULT_SCAN_INTERVAL = 60
+CONF_BASE_URL = "base_url"
+CONF_USERNAME = "username"
+CONF_PASSWORD = "password"
+CONF_SCAN_INTERVAL = "scan_interval"
+# Per-config-entry secret for the route URLs. Stored in entry.data so the
+# dashboard URL survives a restart.
+CONF_ROUTE_TOKEN = "route_token"
+PLATFORMS = [Platform.DEVICE_TRACKER, Platform.SENSOR]

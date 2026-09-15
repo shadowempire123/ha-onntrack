@@ -1,0 +1,29 @@
+get_route:
+  name: Get route
+  description: Retrieve route points for an Onntrack device and time range.
+  fields:
+    imei:
+      name: IMEI
+      description: IMEI of the Onntrack device.
+      required: true
+      selector:
+        text:
+    start:
+      name: Start
+      description: Start date and time in the Home Assistant time zone.
+      required: true
+      selector:
+        datetime:
+    end:
+      name: End
+      description: End date and time in the Home Assistant time zone.
+      required: true
+      selector:
+        datetime:
+    config_entry_id:
+      name: Config entry ID
+      description: Optional Onntrack config entry ID when multiple accounts contain the same IMEI.
+      required: false
+      advanced: true
+      selector:
+        text:

@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Onntrack verbinden",
+        "description": "Gib die Zugangsdaten deines Onntrack-Kontos ein.",
+        "data": {
+          "base_url": "Portal-URL",
+          "username": "Benutzername",
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Das Onntrack-Portal ist nicht erreichbar.",
+      "invalid_auth": "Benutzername oder Passwort sind ungueltig.",
+      "invalid_url": "Bitte eine gueltige HTTP- oder HTTPS-URL eingeben."
+    },
+    "abort": {
+      "already_configured": "Dieses Onntrack-Konto ist bereits eingerichtet."
+    }
+  }
+}
