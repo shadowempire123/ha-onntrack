@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Documentation
+- Corrected the reason `ignore: brands` sits in the validation workflow. The
+  comment claimed it was temporary, pending a pull request against
+  home-assistant/brands. That pull request would be closed unread: since Home
+  Assistant 2026.3 the brands repository no longer accepts icons for custom
+  integrations, because they serve their own. The check can never pass and
+  never needs to.
+- Documented in the README where the brand images live and how Home Assistant
+  serves them.
+
 ## 0.7.1 — 2026-09-15
 
 ### Added

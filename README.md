@@ -110,6 +110,19 @@ history. It is stored in the config entry and stays stable across restarts. To
 invalidate it, remove the integration and add it again — a new token is
 generated on setup.
 
+## Icon and logo
+
+The brand images live in `custom_components/onntrack/brand/` and are served by
+Home Assistant itself through its brands proxy, at
+`/api/brands/integration/onntrack/icon.png`. Local images take priority over
+the brands CDN, so nothing has to be registered anywhere: since Home Assistant
+2026.3 the [brands repository](https://github.com/home-assistant/brands) no
+longer accepts icons for custom integrations.
+
+On older versions the frontend falls back to the CDN, which has no entry for
+this integration and answers with a placeholder. The integration works either
+way; only the icon is affected.
+
 ## Addresses and OpenStreetMap
 
 When the portal supplies no address for a position, the integration asks

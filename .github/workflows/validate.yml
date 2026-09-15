@@ -25,9 +25,12 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-          # The brand images ship inside the integration for now. Getting
-          # "onntrack" into home-assistant/brands is a separate pull request
-          # against that repository; until it is merged this check cannot pass.
+          # Permanently ignored, not a pending task: since Home Assistant
+          # 2026.3 the brands repository no longer accepts icons for custom
+          # integrations, because they serve their own from the brand/
+          # directory. A submission there would be closed on sight, so this
+          # check can never pass and never needs to.
+          # https://developers.home-assistant.io/blog/2026/02/24/brands-proxy-api
           ignore: brands
 
   tests:
