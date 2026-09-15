@@ -133,6 +133,11 @@ pip install -r requirements_test.txt
 pytest
 ```
 
+Releasing is a single step: bump `version` in `manifest.json` and `VERSION` in
+`const.py`, add a `CHANGELOG.md` section for it, then push the matching `v*`
+tag. A workflow publishes the release with those changelog entries as its
+notes, and refuses the tag if the versions disagree.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

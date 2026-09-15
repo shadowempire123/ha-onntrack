@@ -2,6 +2,14 @@
 
 ## 0.7.1 — 2026-09-15
 
+### Added
+- Releases are published by a workflow when a tag is pushed. It refuses a tag
+  whose version disagrees with `manifest.json` — HACS matches the two, so such
+  a release would never be offered as an update — and takes the release notes
+  from the matching `CHANGELOG.md` section, so the notes cannot drift from the
+  changelog. It runs on the automatic `GITHUB_TOKEN`; no personal access token
+  is stored anywhere.
+
 ### Fixed
 - The icons were the wordmark letterboxed into a square: in the 256x256 file
   the artwork occupied 230x48 px, the rest was transparent padding. Home
