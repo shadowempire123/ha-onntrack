@@ -3,6 +3,12 @@
 ## 0.7.1 — 2026-09-15
 
 ### Fixed
+- The icons were the wordmark letterboxed into a square: in the 256x256 file
+  the artwork occupied 230x48 px, the rest was transparent padding. Home
+  Assistant's brands repository requires images trimmed to their content, and
+  trimming a wordmark cannot produce a 1:1 image. Both icons are now built from
+  Onntrack's own square brand mark, trimmed and scaled to 256x256 and 512x512.
+  The logos were already within spec (shortest side 128 and 256 px).
 - The Leaflet zoom control sat in the top left corner, directly on top of the
   waypoint panel. The control now lives in the bottom right corner, and is
   hidden below 760 px where the waypoint list moves to the bottom.
