@@ -22,9 +22,16 @@
   the new map URLs. The token is what protects the route endpoints, and there
   was no way to replace it short of removing the integration.
 - **Diagnostics.** Settings → Devices & services → the three dots → Download
-  diagnostics. IMEI, credentials, route token, device name, address and
-  coordinates are stripped — including the IMEIs used as keys in the device
-  map, which a plain redaction helper would have left untouched.
+  diagnostics. The report is safe to paste into a public issue: credentials,
+  route token, IMEI, device name, address and coordinates are gone, including
+  the IMEIs used as keys in the device map, which a redaction helper working on
+  values would have left untouched.
+  The portal's raw payload cannot be cleaned by listing forbidden key names —
+  it carries a display structure whose interesting values sit in generic
+  `value` fields, so the same IMEI appears under half a dozen keys. It is
+  therefore reduced to its shape: field names and types survive, which is what
+  tells a maintainer what the portal actually sent, while the values do not. A
+  value-based scrub runs over the result as a second line of defence.
 - A My Home Assistant button in the README that opens this repository in HACS
   on the reader's own instance, and a second one that starts the config flow
   after the restart. The manual steps stay documented next to them: the button
