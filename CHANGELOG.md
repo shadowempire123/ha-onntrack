@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Fixed
+- The release workflow fell over when a tag was pushed a second time at a
+  different commit: it always called `gh release create`, which fails if a
+  release for that tag already exists. It now updates the existing release
+  instead.
+
 ### Added
 - A My Home Assistant button in the README that opens this repository in HACS
   on the reader's own instance, and a second one that starts the config flow
