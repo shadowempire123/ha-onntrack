@@ -42,17 +42,37 @@ Home Assistant 2025.1 or newer, and an Onntrack portal account.
 
 ## Installation
 
-### HACS
+### HACS, in one click
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.][hacs-repo-badge]][hacs-repo-url]
+
+The button opens this repository in HACS on your own instance. Select
+**Download**, then restart Home Assistant.
+
+It goes through [My Home Assistant][my-ha], which asks your browser for the
+address of your instance the first time and remembers it afterwards. Nothing is
+sent anywhere else — the page only redirects you. If you would rather not use
+it, the manual route below does exactly the same thing.
+
+### HACS, by hand
 
 1. HACS → three-dot menu → **Custom repositories**.
 2. Add `https://github.com/shadowempire123/ha-onntrack` with category
    **Integration**.
 3. Download **Onntrack**, then restart Home Assistant.
 
-### Manually
+### Without HACS
 
 Copy `custom_components/onntrack` into your Home Assistant `config` directory
 and restart.
+
+### Then add it
+
+[![Open your Home Assistant instance and start setting up a new integration.][config-flow-badge]][config-flow-url]
+
+Or **Settings → Devices & services → Add integration → Onntrack**. Either way
+you need the restart first: Home Assistant only picks up a new integration at
+startup.
 
 ## Configuration
 
@@ -157,3 +177,8 @@ MIT — see [LICENSE](LICENSE).
 
 [hacs-badge]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg
 [hacs-url]: https://github.com/hacs/integration
+[hacs-repo-badge]: https://my.home-assistant.io/badges/hacs_repository.svg
+[hacs-repo-url]: https://my.home-assistant.io/redirect/hacs_repository/?owner=shadowempire123&repository=ha-onntrack&category=integration
+[config-flow-badge]: https://my.home-assistant.io/badges/config_flow_start.svg
+[config-flow-url]: https://my.home-assistant.io/redirect/config_flow_start/?domain=onntrack
+[my-ha]: https://my.home-assistant.io/

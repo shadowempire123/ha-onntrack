@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Added
+- A My Home Assistant button in the README that opens this repository in HACS
+  on the reader's own instance, and a second one that starts the config flow
+  after the restart. The manual steps stay documented next to them: the button
+  relies on my.home-assistant.io knowing the address of your instance, which
+  not everyone wants to set up.
+
 ### Documentation
 - Corrected the reason `ignore: brands` sits in the validation workflow. The
   comment claimed it was temporary, pending a pull request against
