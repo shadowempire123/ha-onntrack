@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.8.1 — 2026-09-16
+
+### Fixed
+- **Which portal field a sensor reads could change from one restart to the
+  next.** The parser tries several names per value — `speed`, `gpsspeed`,
+  `vehiclespeed` — and the order is meant to be the preference. They were held
+  in a `set`, whose iteration order depends on string hashing, and Python
+  randomises that per process. A device reporting two of the alternatives with
+  different values would therefore pick a different one after every restart,
+  silently. They are tuples now, so the written order is the order that counts.
+  No device on the author's account reports two names from the same group, so
+  this was latent rather than biting — but it is exactly the kind of fault that
+  is impossible to reproduce once someone does report it.
+
+### Added
+- Tests for the parsing layer and for the coordinator's events. That layer
+  guesses the field names of an undocumented API, and when the portal renames
+  one a sensor goes quiet with nothing in the log; the events are what
+  automations hang off, so a missed `onntrack_alert` means nobody hears that
+  the tracker left the vehicle. Coverage of `api.py` went from 34% to 70%, of
+  `coordinator.py` from nothing to 73%, and of the integration overall from
+  37% to 51%. 164 tests.
+
 ## 0.8.0 — 2026-09-16
 
 ### Added

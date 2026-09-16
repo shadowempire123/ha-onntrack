@@ -70,6 +70,30 @@ def _stub_homeassistant() -> None:
     config_entries = types.ModuleType("homeassistant.config_entries")
     config_entries.ConfigEntry = type("ConfigEntry", (), {})
 
+    exceptions = types.ModuleType("homeassistant.exceptions")
+    exceptions.ConfigEntryAuthFailed = type("ConfigEntryAuthFailed", (Exception,), {})
+    exceptions.HomeAssistantError = type("HomeAssistantError", (Exception,), {})
+
+    update_coordinator = types.ModuleType("homeassistant.helpers.update_coordinator")
+    update_coordinator.UpdateFailed = type("UpdateFailed", (Exception,), {})
+
+    class DataUpdateCoordinator:
+        # The real class is generic; the integration subclasses it as
+        # DataUpdateCoordinator[dict[str, Any]].
+        def __class_getitem__(cls, _item):
+            return cls
+
+        def __init__(self, hass, *, logger=None, name=None, update_interval=None):
+            self.hass = hass
+            self.logger = logger
+            self.name = name
+            self.update_interval = update_interval
+            self.data = None
+
+    update_coordinator.DataUpdateCoordinator = DataUpdateCoordinator
+
+    helpers = types.ModuleType("homeassistant.helpers")
+
     sys.modules.update(
         {
             "homeassistant": homeassistant,
@@ -80,6 +104,9 @@ def _stub_homeassistant() -> None:
             "homeassistant.components.http.const": http_const,
             "homeassistant.components.diagnostics": diagnostics,
             "homeassistant.config_entries": config_entries,
+            "homeassistant.exceptions": exceptions,
+            "homeassistant.helpers": helpers,
+            "homeassistant.helpers.update_coordinator": update_coordinator,
         }
     )
 

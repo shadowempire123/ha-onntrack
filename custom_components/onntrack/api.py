@@ -106,7 +106,14 @@ def _all_key_values(value: Any, result: dict[str, Any] | None = None) -> dict[st
     return result
 
 
-def _lookup(key_values: dict[str, Any], names: set[str]) -> Any:
+def _lookup(key_values: dict[str, Any], names: tuple[str, ...]) -> Any:
+    """Return the first of ``names`` the portal supplied.
+
+    The order matters and must stay a sequence. With a set, iteration order
+    depends on string hashing, which Python randomises per process -- so a
+    device reporting both ``speed`` and ``gpsspeed`` would pick a different one
+    after a restart.
+    """
     for name in names:
         candidate = key_values.get(name)
         if candidate not in (None, ""):
@@ -127,9 +134,9 @@ def _numeric(value: Any) -> float | None:
 
 
 def _coordinates(value: Any, key_values: dict[str, Any]) -> tuple[float | None, float | None]:
-    latitude = _numeric(_lookup(key_values, {"latitude", "lat", "lastlat"}))
-    longitude = _numeric(_lookup(key_values, {"longitude", "lng", "lon", "lastlng"}))
-    combined = _lookup(key_values, {"source_latlng", "sourcelatlng", "lastlatlng"})
+    latitude = _numeric(_lookup(key_values, ("latitude", "lat", "lastlat",)))
+    longitude = _numeric(_lookup(key_values, ("longitude", "lng", "lon", "lastlng",)))
+    combined = _lookup(key_values, ("source_latlng", "sourcelatlng", "lastlatlng",))
     if isinstance(combined, str):
         parts = [part.strip() for part in combined.split(",", 1)]
         if len(parts) == 2:
@@ -199,8 +206,8 @@ def parse_monitor_data(monitor_response: Any, device: dict[str, Any]) -> dict[st
     monitor_properties.update({f"values.{key}": value for key, value in key_values.items()})
     latitude, longitude = _coordinates(monitor_data, key_values)
     alert_properties = _alert_properties(monitor_properties)
-    status = _lookup(key_values, {"status", "devicestatus", "onlinestatus", "state"}) or device.get("status")
-    reported_speed = _numeric(_lookup(key_values, {"speed", "gpsspeed", "vehiclespeed"}))
+    status = _lookup(key_values, ("status", "devicestatus", "onlinestatus", "state",)) or device.get("status")
+    reported_speed = _numeric(_lookup(key_values, ("speed", "gpsspeed", "vehiclespeed",)))
     parked = any(
         term in str(status or "").casefold()
         for term in ("static", "parked", "acc: off", "acc off", "stopped")
@@ -208,20 +215,20 @@ def parse_monitor_data(monitor_response: Any, device: dict[str, Any]) -> dict[st
     return {
         "latitude": latitude if latitude is not None else _numeric(device.get("lastLat")),
         "longitude": longitude if longitude is not None else _numeric(device.get("lastLng")),
-        "battery": _numeric(_lookup(key_values, {"battery", "batterylevel", "batterypercent", "electricity", "power"})),
+        "battery": _numeric(_lookup(key_values, ("battery", "batterylevel", "batterypercent", "electricity", "power",))),
         "status": status,
         "speed": 0.0 if parked else reported_speed,
         "reported_speed": reported_speed,
         "parked": parked,
-        "mileage": _numeric(_lookup(key_values, {"totalmileage", "mileage", "mileagevalue"})) or _numeric(device.get("totalMileage")),
-        "today_mileage": _numeric(_lookup(key_values, {"todaymileage", "dailymileage", "todaydistance", "daymileage"})),
-        "address": _lookup(key_values, {"address", "locationaddress"}),
-        "last_fix": _lookup(key_values, {"positioningtime", "gpstime", "fixtime", "lastfixtime"}),
-        "last_online": _lookup(key_values, {"lastonlinetime", "lastonline", "onlinetime", "lastcontacttime", "lastupdatetime"}),
-        "gnss": _lookup(key_values, {"gnss", "positioningtype", "positiontype", "loctype", "gpsstatus"}),
-        "visible_satellites": _numeric(_lookup(key_values, {"visiblesatellites", "satellitecount", "satellites", "satnum", "gpsnum"})),
-        "cellular_signal": _lookup(key_values, {"cellularsignalstrength", "cellsignal", "cellstrength", "gsm_signal", "signalstrength", "csq", "rsrp"}),
-        "positioning_time": _lookup(key_values, {"positioningtime", "gpstime", "fixtime", "lastfixtime"}),
+        "mileage": _numeric(_lookup(key_values, ("totalmileage", "mileage", "mileagevalue",))) or _numeric(device.get("totalMileage")),
+        "today_mileage": _numeric(_lookup(key_values, ("todaymileage", "dailymileage", "todaydistance", "daymileage",))),
+        "address": _lookup(key_values, ("address", "locationaddress",)),
+        "last_fix": _lookup(key_values, ("positioningtime", "gpstime", "fixtime", "lastfixtime",)),
+        "last_online": _lookup(key_values, ("lastonlinetime", "lastonline", "onlinetime", "lastcontacttime", "lastupdatetime",)),
+        "gnss": _lookup(key_values, ("gnss", "positioningtype", "positiontype", "loctype", "gpsstatus",)),
+        "visible_satellites": _numeric(_lookup(key_values, ("visiblesatellites", "satellitecount", "satellites", "satnum", "gpsnum",))),
+        "cellular_signal": _lookup(key_values, ("cellularsignalstrength", "cellsignal", "cellstrength", "gsm_signal", "signalstrength", "csq", "rsrp",)),
+        "positioning_time": _lookup(key_values, ("positioningtime", "gpstime", "fixtime", "lastfixtime",)),
         "device_properties": _scalar_properties(device),
         "monitor_properties": monitor_properties,
         "alert_properties": alert_properties,

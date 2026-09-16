@@ -3,7 +3,7 @@ from homeassistant.const import Platform
 DOMAIN = "onntrack"
 # Keep in sync with the version in manifest.json: it goes into the
 # User-Agent that Nominatim requires for identification.
-VERSION = "0.8.0"
+VERSION = "0.8.1"
 SERVICE_GET_ROUTE = "get_route"
 SERVICE_REGENERATE_ROUTE_TOKEN = "regenerate_route_token"
 EVENT_ALERT = "onntrack_alert"
