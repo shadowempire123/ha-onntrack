@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # Only the workflow actions: the integration itself has no dependencies, and
+  # Home Assistant provides everything it imports.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci

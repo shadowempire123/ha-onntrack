@@ -11,7 +11,6 @@ import asyncio
 import time
 
 import pytest
-
 from onntrack import api as api_module
 from onntrack.api import OnntrackApi
 

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 import hmac
+from datetime import datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
 from aiohttp import web
-
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import HomeAssistant
 

@@ -4,7 +4,7 @@ from typing import Any
 
 from homeassistant.components.device_tracker import SourceType, TrackerEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -18,13 +18,25 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    devices = coordinator.data.get("devices", {})
-    async_add_entities([OnntrackTracker(coordinator, imei) for imei in devices])
+    known: set[str] = set()
+
+    @callback
+    def _add_new_devices() -> None:
+        """Pick up trackers added to the account after setup."""
+        devices = (coordinator.data or {}).get("devices", {})
+        added = [imei for imei in devices if imei not in known]
+        if not added:
+            return
+        known.update(added)
+        async_add_entities(OnntrackTracker(coordinator, imei) for imei in added)
+
+    _add_new_devices()
+    entry.async_on_unload(coordinator.async_add_listener(_add_new_devices))
 
 
 class OnntrackTracker(CoordinatorEntity, TrackerEntity):
     _attr_has_entity_name = True
-    _attr_name = "Location"
+    _attr_translation_key = "location"
     _attr_icon = "mdi:map-marker"
     _attr_source_type = SourceType.GPS
 
@@ -51,6 +63,14 @@ class OnntrackTracker(CoordinatorEntity, TrackerEntity):
     def longitude(self) -> float | None:
         value = record_for(self.coordinator, self.imei).get("longitude")
         return float(value) if value is not None else None
+
+    @property
+    def battery_level(self) -> int | None:
+        value = record_for(self.coordinator, self.imei).get("battery")
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            return None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:

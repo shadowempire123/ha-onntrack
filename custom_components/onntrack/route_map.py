@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
 import html
 import math
 import re
-from urllib.parse import quote
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
+from urllib.parse import quote
 
 
 @dataclass(frozen=True)

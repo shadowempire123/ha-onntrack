@@ -8,9 +8,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers import config_validation as cv
@@ -23,11 +21,16 @@ from .api import OnntrackApi, OnntrackAuthError
 from .const import (
     CONF_BASE_URL,
     CONF_PASSWORD,
+    CONF_REVERSE_GEOCODE,
     CONF_ROUTE_TOKEN,
+    CONF_SCAN_INTERVAL,
     CONF_USERNAME,
+    DEFAULT_REVERSE_GEOCODE,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     PLATFORMS,
     SERVICE_GET_ROUTE,
+    SERVICE_REGENERATE_ROUTE_TOKEN,
 )
 from .coordinator import OnntrackCoordinator
 from .http import OnntrackRouteMapView, OnntrackRouteView
@@ -114,11 +117,59 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             "geojson_url": f"/api/onntrack/route/{map_id}?{credentials}&format=geojson&{period}",
         }
 
+    async def async_regenerate_route_token(call: ServiceCall) -> ServiceResponse:
+        """Issue a new route token, invalidating every map link handed out so far.
+
+        The token is what protects the route endpoints, so there has to be a way
+        to replace it without deleting and re-adding the integration.
+        """
+        config_entry_id = call.data.get("config_entry_id")
+        entries = hass.config_entries.async_entries(DOMAIN)
+        if config_entry_id:
+            entry = hass.config_entries.async_get_entry(config_entry_id)
+            if entry is None or entry.domain != DOMAIN:
+                raise HomeAssistantError(f"No Onntrack config entry with ID {config_entry_id}")
+        elif len(entries) == 1:
+            entry = entries[0]
+        else:
+            raise HomeAssistantError(
+                "Several Onntrack accounts are configured; pass config_entry_id"
+            )
+
+        token = secrets.token_urlsafe(32)
+        hass.config_entries.async_update_entry(
+            entry, data={**entry.data, CONF_ROUTE_TOKEN: token}
+        )
+        generated_at = int(time.time())
+        maps = []
+        for map_id, route in route_maps.items():
+            if route.get("coordinator") is not hass.data.get(DOMAIN, {}).get(entry.entry_id):
+                continue
+            route["token"] = token
+            maps.append(
+                {
+                    "imei": route["imei"],
+                    "device_name": route["device_name"],
+                    "map_url": (
+                        f"/api/onntrack/map/{map_id}"
+                        f"?token={quote(token, safe='')}&v={generated_at}"
+                    ),
+                }
+            )
+        return {"maps": maps}
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_GET_ROUTE,
         async_get_route,
         schema=GET_ROUTE_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_REGENERATE_ROUTE_TOKEN,
+        async_regenerate_route_token,
+        schema=vol.Schema({vol.Optional("config_entry_id"): cv.string}),
         supports_response=SupportsResponse.ONLY,
     )
     return True
@@ -159,8 +210,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.data[CONF_PASSWORD],
         address_cache=address_cache,
         cache_changed=_address_cache_changed,
+        reverse_geocode=entry.options.get(CONF_REVERSE_GEOCODE, DEFAULT_REVERSE_GEOCODE),
     )
-    coordinator = OnntrackCoordinator(hass, api)
+    coordinator = OnntrackCoordinator(
+        hass, api, entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    )
     try:
         await coordinator.async_config_entry_first_refresh()
     except UpdateFailed as error:

@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
-from datetime import datetime
 import hashlib
 import re
 import time
+from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 
 import aiohttp
 
 from .const import VERSION
-
 
 API_PREFIX = "/v3/new"
 REFERER_PATH = "/resource/dev/index.html"
@@ -240,6 +239,7 @@ class OnntrackApi:
         *,
         address_cache: dict[str, str] | None = None,
         cache_changed: Callable[[], None] | None = None,
+        reverse_geocode: bool = True,
     ) -> None:
         self._session = session
         self.base_url = base_url.rstrip("/")
@@ -250,11 +250,16 @@ class OnntrackApi:
         # survive a restart.
         self._address_cache: dict[str, str] = {} if address_cache is None else address_cache
         self._cache_changed = cache_changed
+        # Sending coordinates to Nominatim is optional; some installations do
+        # not want them leaving the network at all.
+        self.reverse_geocode = reverse_geocode
         self._last_address: dict[str, str] = {}
         self._next_lookup = 0.0
         self._blocked_until = 0.0
 
     async def _async_reverse_geocode(self, latitude: float, longitude: float) -> str | None:
+        if not self.reverse_geocode:
+            return None
         cache_key = f"{latitude:.4f},{longitude:.4f}"
         if cache_key in self._address_cache:
             return self._address_cache[cache_key]
@@ -274,7 +279,7 @@ class OnntrackApi:
                     self._blocked_until = time.monotonic() + NOMINATIM_BLOCK_INTERVAL
                     return None
                 data = await response.json(content_type=None) if response.status == 200 else {}
-        except (aiohttp.ClientError, asyncio.TimeoutError, TypeError, ValueError):
+        except (TimeoutError, aiohttp.ClientError, TypeError, ValueError):
             return None
         address = data.get("display_name") if isinstance(data, dict) else None
         if not address:
@@ -301,15 +306,15 @@ class OnntrackApi:
             async with self._session.request(method, url, json=payload, headers=headers) as response:
                 try:
                     data = await response.json(content_type=None)
-                except (TypeError, ValueError, aiohttp.ContentTypeError):
+                except (TypeError, ValueError, aiohttp.ContentTypeError) as error:
                     text = await response.text()
                     raise OnntrackApiError(
                         f"No JSON response from {method} {path}: HTTP {response.status} {text[:200]}",
                         response.status,
-                    )
+                    ) from error
         except OnntrackApiError:
             raise
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+        except (TimeoutError, aiohttp.ClientError) as error:
             raise OnntrackApiError(f"Network error on {method} {path}: {error}") from error
 
         if response.status == 401:

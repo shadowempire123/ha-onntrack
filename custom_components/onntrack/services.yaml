@@ -27,3 +27,17 @@ get_route:
       advanced: true
       selector:
         text:
+regenerate_route_token:
+  name: Regenerate route token
+  description: >-
+    Issue a new token for the route endpoints. Every map link handed out so far
+    stops working, including the URL in any dashboard card, which has to be
+    updated with the one this action returns.
+  fields:
+    config_entry_id:
+      name: Config entry ID
+      description: Optional Onntrack config entry ID when several accounts are configured.
+      required: false
+      advanced: true
+      selector:
+        text:

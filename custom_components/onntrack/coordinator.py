@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from datetime import timedelta
 import logging
+from datetime import timedelta
 from typing import Any
 
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import OnntrackApi, OnntrackApiError, OnntrackAuthError, _is_active_alert_value
@@ -14,13 +15,18 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class OnntrackCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    def __init__(self, hass: HomeAssistant, api: OnntrackApi) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        api: OnntrackApi,
+        scan_interval: int = DEFAULT_SCAN_INTERVAL,
+    ) -> None:
         self.api = api
         super().__init__(
             hass,
             logger=_LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
+            update_interval=timedelta(seconds=scan_interval),
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -30,6 +36,11 @@ class OnntrackCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             try:
                 await self.api.async_login()
                 data = await self.api.async_fetch_data()
+            except OnntrackAuthError as error:
+                # A fresh login was refused too, so the stored password is no
+                # longer valid. Asking Home Assistant for new credentials beats
+                # retrying a wrong password every minute forever.
+                raise ConfigEntryAuthFailed(str(error)) from error
             except OnntrackApiError as error:
                 raise UpdateFailed(str(error)) from error
         except OnntrackApiError as error:

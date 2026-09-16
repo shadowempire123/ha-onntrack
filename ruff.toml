@@ -1,0 +1,26 @@
+target-version = "py312"
+line-length = 110
+
+[lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "W",    # warnings
+    "I",    # import sorting
+    "UP",   # outdated syntax
+    "B",    # likely bugs
+    "C4",   # comprehensions
+    "SIM",  # needless complexity
+    "RUF",  # ruff's own
+]
+
+[lint.per-file-ignores]
+# Tests reach into private helpers on purpose: the throttling and the
+# authorisation check are exactly what needs pinning down.
+"tests/*" = ["SLF001"]
+# Two files earn their long lines. api.py maps the portal's field names in
+# lookup tables that read better one per line than wrapped, and breaking them
+# up invites a typo in a key that would silently empty a sensor. route_map.py
+# embeds a complete HTML page with its stylesheet and script.
+"custom_components/onntrack/api.py" = ["E501"]
+"custom_components/onntrack/route_map.py" = ["E501"]

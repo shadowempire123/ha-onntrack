@@ -1,0 +1,49 @@
+name: Bug report
+description: Something does not work as described
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not post your IMEI, portal password or a route URL. The route
+        URL carries the token that grants access to your vehicle's history, and
+        on portals of this kind an IMEI can be enough to bind a device.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+      description: From HACS, or the `version` in `manifest.json`.
+      placeholder: 0.7.1
+    validations:
+      required: true
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      placeholder: 2026.9.2
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: >-
+        Settings → System → Logs, filtered for `onntrack`. Enable debug logging
+        for the integration first if there is nothing there.
+      render: text
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: >-
+        Optional but useful. Settings → Devices & services → Onntrack → the
+        three dots → Download diagnostics. Credentials, IMEI and coordinates
+        are removed from that file automatically.
+      render: json

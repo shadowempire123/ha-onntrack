@@ -9,6 +9,13 @@
           "username": "Username",
           "password": "Password"
         }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Onntrack",
+        "description": "The portal no longer accepts the stored password for {username}. Enter the current one.",
+        "data": {
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -17,7 +24,71 @@
       "invalid_url": "Enter a valid HTTP or HTTPS URL."
     },
     "abort": {
-      "already_configured": "This Onntrack account is already configured."
+      "already_configured": "This Onntrack account is already configured.",
+      "reauth_successful": "Re-authentication was successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Onntrack options",
+        "data": {
+          "scan_interval": "Polling interval",
+          "reverse_geocode": "Resolve addresses via OpenStreetMap"
+        },
+        "data_description": {
+          "scan_interval": "How often the portal is polled. A parked vehicle does not need to be asked every minute.",
+          "reverse_geocode": "Only used when the portal supplies no address of its own. The coordinates leave your network when it does."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Battery"
+      },
+      "status": {
+        "name": "Status"
+      },
+      "speed": {
+        "name": "Speed"
+      },
+      "mileage": {
+        "name": "Mileage"
+      },
+      "today_mileage": {
+        "name": "Today's mileage"
+      },
+      "address": {
+        "name": "Address"
+      },
+      "gnss": {
+        "name": "GNSS"
+      },
+      "visible_satellites": {
+        "name": "Visible satellites"
+      },
+      "cellular_signal": {
+        "name": "Cellular signal strength"
+      },
+      "last_online": {
+        "name": "Last online"
+      },
+      "last_fix": {
+        "name": "Last fix"
+      },
+      "imei": {
+        "name": "IMEI"
+      },
+      "alert_count": {
+        "name": "Alerts"
+      }
+    },
+    "device_tracker": {
+      "location": {
+        "name": "Location"
+      }
     }
   }
 }

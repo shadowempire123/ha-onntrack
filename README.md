@@ -84,6 +84,19 @@ The password is sent to the portal MD5-hashed, which is the format the portal's
 own client uses — that is the portal's design, not a choice made here. The
 session token is kept in memory only and never written to the log.
 
+## Options
+
+**Settings → Devices & services → Onntrack → Configure**
+
+- **Polling interval** — how often the portal is asked, between 30 seconds and
+  an hour. The default is 60 s, which is more than a parked vehicle needs.
+- **Resolve addresses via OpenStreetMap** — see below. Turning it off means the
+  address sensor only reports what the portal supplies itself.
+
+If the portal stops accepting your password, Home Assistant asks for a new one
+through the usual re-authentication prompt; the integration does not have to be
+removed and set up again.
+
 ## The route map
 
 The `onntrack.get_route` action fetches a period from the portal and returns the
@@ -126,9 +139,16 @@ config entry and compared in constant time. That token is what makes the iframe
 work.
 
 Treat the URL like a password: anyone holding it can read that device's route
-history. It is stored in the config entry and stays stable across restarts. To
-invalidate it, remove the integration and add it again — a new token is
-generated on setup.
+history. It is stored in the config entry and stays stable across restarts.
+
+To invalidate every link handed out so far, run `onntrack.regenerate_route_token`.
+It issues a new token and returns the new map URLs, which then have to be put
+into any dashboard card using the old one:
+
+```yaml
+action: onntrack.regenerate_route_token
+response_variable: rotated
+```
 
 ## Icon and logo
 
@@ -154,6 +174,15 @@ makes at most one uncached lookup every two minutes, resolved addresses are
 cached on disk, and an HTTP 403 or 429 pauses the geocoder for an hour. While a
 lookup is throttled the last known address is kept, so the sensor does not
 flicker.
+
+## Reporting a problem
+
+**Settings → Devices & services → Onntrack → the three dots → Download
+diagnostics** produces a report that is safe to attach to an issue: IMEI,
+credentials, route token, device name, address and coordinates are removed,
+including the IMEIs used as keys in the device list.
+
+Please do not paste a route URL into an issue — it carries the token.
 
 ## Development
 

@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 
 import pytest
 from aiohttp import web
-
 from onntrack.http import _authorized, _month_chunks, _next_month, _route_period
 
 TOKEN = "s3cret-token"
@@ -61,7 +60,7 @@ class TestPeriod:
         assert label == "2026-09"
 
     def test_december_rolls_into_january(self):
-        start, end, _ = _route_period({"month": "2026-12"}, "Europe/Vienna")
+        _start, end, _label = _route_period({"month": "2026-12"}, "Europe/Vienna")
         assert (end.year, end.month) == (2027, 1)
 
     def test_an_explicit_range_includes_the_final_day(self):

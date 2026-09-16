@@ -48,6 +48,28 @@ def _stub_homeassistant() -> None:
     http_const = types.ModuleType("homeassistant.components.http.const")
     http_const.KEY_AUTHENTICATED = "ha_authenticated"
 
+    # A faithful stand-in for Home Assistant's redaction helper: it replaces
+    # the values of matching keys and recurses. Testing the diagnostics module
+    # against a fake that did less would prove nothing.
+    diagnostics = types.ModuleType("homeassistant.components.diagnostics")
+    redacted = "**REDACTED**"
+
+    def async_redact_data(data, to_redact):
+        if isinstance(data, dict):
+            return {
+                key: (redacted if key in to_redact else async_redact_data(value, to_redact))
+                for key, value in data.items()
+            }
+        if isinstance(data, list):
+            return [async_redact_data(item, to_redact) for item in data]
+        return data
+
+    diagnostics.async_redact_data = async_redact_data
+    diagnostics.REDACTED = redacted
+
+    config_entries = types.ModuleType("homeassistant.config_entries")
+    config_entries.ConfigEntry = type("ConfigEntry", (), {})
+
     sys.modules.update(
         {
             "homeassistant": homeassistant,
@@ -56,6 +78,8 @@ def _stub_homeassistant() -> None:
             "homeassistant.components": components,
             "homeassistant.components.http": http,
             "homeassistant.components.http.const": http_const,
+            "homeassistant.components.diagnostics": diagnostics,
+            "homeassistant.config_entries": config_entries,
         }
     )
 

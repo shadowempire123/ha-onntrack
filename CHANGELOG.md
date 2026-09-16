@@ -1,19 +1,59 @@
 # Changelog
 
-## Unreleased
+## 0.8.0 — 2026-09-16
+
+### Added
+- **An options flow that actually has something in it.** Previously the
+  "Configure" button opened a handler that created an empty entry and showed no
+  form at all — from the outside that looks like a broken integration. It now
+  offers the polling interval and a switch for reverse geocoding.
+- **The polling interval is configurable** (30 s to 1 h, 60 s by default).
+  `CONF_SCAN_INTERVAL` had been sitting in `const.py` unused; polling was hard
+  wired. A tracker on a vehicle that stands still for eleven days does not need
+  to be asked every minute.
+- **Reverse geocoding can be turned off.** It only runs when the portal
+  supplies no address, but the coordinates leave your network when it does, and
+  that should be a choice.
+- **Re-authentication.** When the portal stops accepting the stored password,
+  Home Assistant now asks for a new one instead of failing every minute
+  forever. Until now the only way out was deleting the integration and setting
+  it up again.
+- **`onntrack.regenerate_route_token`** issues a new route token and returns
+  the new map URLs. The token is what protects the route endpoints, and there
+  was no way to replace it short of removing the integration.
+- **Diagnostics.** Settings → Devices & services → the three dots → Download
+  diagnostics. IMEI, credentials, route token, device name, address and
+  coordinates are stripped — including the IMEIs used as keys in the device
+  map, which a plain redaction helper would have left untouched.
+- A My Home Assistant button in the README that opens this repository in HACS
+  on the reader's own instance, and a second one that starts the config flow
+  after the restart. The manual steps stay documented next to them: the button
+  relies on my.home-assistant.io knowing the address of your instance, which
+  not everyone wants to set up.
+
+### Changed
+- **Entity names come from the translations now** instead of being hard coded,
+  so the German translation can finally name them. Existing entity IDs are
+  unaffected; only the displayed names change, and only for non-English
+  installations.
+- **The password field in the setup dialog is a password field.** It used to be
+  plain text, so the portal password was readable on screen while typing.
+- **Devices added to the Onntrack account show up without a restart.** Entities
+  were built once at setup, so a newly bought tracker stayed invisible.
+- **The device tracker reports `battery_level`** through the property meant for
+  it, rather than only as an attribute.
+
+### Removed
+- **`latitude` and `longitude` are no longer attached to every sensor.** All
+  thirteen carried them, so each poll wrote the vehicle's position thirteen
+  times into the recorder and any long-term database behind it. The position
+  belongs on the device tracker, which has it.
 
 ### Fixed
 - The release workflow fell over when a tag was pushed a second time at a
   different commit: it always called `gh release create`, which fails if a
   release for that tag already exists. It now updates the existing release
   instead.
-
-### Added
-- A My Home Assistant button in the README that opens this repository in HACS
-  on the reader's own instance, and a second one that starts the config flow
-  after the restart. The manual steps stay documented next to them: the button
-  relies on my.home-assistant.io knowing the address of your instance, which
-  not everyone wants to set up.
 
 ### Documentation
 - Corrected the reason `ignore: brands` sits in the validation workflow. The
