@@ -282,11 +282,19 @@ def build_route_page(
         const initialPoints = [];
         const initialStops = [];
         const map = L.map("map", {{zoomControl: false}});
-        L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{
+        const streetLayer = L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{
           maxZoom: 19,
           referrerPolicy: "strict-origin-when-cross-origin",
           attribution: "&copy; OpenStreetMap contributors"
         }}).addTo(map);
+        // Aerial imagery without an API key, switchable next to the street map.
+        const satelliteLayer = L.tileLayer(
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{
+          maxZoom: 19,
+          referrerPolicy: "strict-origin-when-cross-origin",
+          attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics"
+        }});
+        L.control.layers({{"Map": streetLayer, "Satellite": satelliteLayer}}, null, {{position: "bottomright"}}).addTo(map);
         L.control.zoom({{position: "bottomright"}}).addTo(map);
         const routeLayer = L.layerGroup().addTo(map);
         const trackPointLayer = L.layerGroup().addTo(map);

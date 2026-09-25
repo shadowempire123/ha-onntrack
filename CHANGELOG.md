@@ -3,6 +3,9 @@
 ## 0.9.0 — 2026-09-25
 
 ### Added
+- **Satellite view on the route map.** A layer switch in the bottom right
+  corner toggles between OpenStreetMap and Esri World Imagery, which needs no
+  API key.
 - **The alarm log from the Onntrack app.** A "Vibration alert" reached the
   phone through the Onntrack app and never reached Home Assistant: vibration,
   install and removal alarms are not part of `getMonitorInfo`, the only thing
