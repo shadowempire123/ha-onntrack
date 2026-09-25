@@ -13,7 +13,9 @@ from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfLength
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
+from .alarms import RECENT_ALARM_COUNT, alarm_counts
 from .const import DOMAIN
 from .entity import device_info_for, record_for
 
@@ -96,6 +98,12 @@ SENSOR_DESCRIPTIONS = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
+        key="last_alarm",
+        translation_key="last_alarm",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        icon="mdi:bell-alert",
+    ),
+    SensorEntityDescription(
         key="alert_count",
         translation_key="alert_count",
         icon="mdi:alert",
@@ -125,7 +133,9 @@ async def async_setup_entry(
             return
         known.update(added)
         async_add_entities(
-            OnntrackSensor(coordinator, imei, description)
+            (OnntrackAlarmSensor if description.key == "last_alarm" else OnntrackSensor)(
+                coordinator, imei, description
+            )
             for imei in added
             for description in SENSOR_DESCRIPTIONS
         )
@@ -181,3 +191,44 @@ class OnntrackSensor(CoordinatorEntity, SensorEntity):
             attributes["parked"] = record.get("parked")
         return attributes
 
+
+
+class OnntrackAlarmSensor(OnntrackSensor):
+    """The newest portal alarm, with the recent ones as an attribute.
+
+    The state is the time of the alarm, so every new one is a state change
+    and shows up in the logbook and the history. The list of recent alarms is
+    kept out of the recorder: it would be written again with every alarm and
+    is rebuilt from the integration's own store anyway.
+    """
+
+    _unrecorded_attributes = frozenset({"recent", "counts"})
+
+    def _alarms(self) -> list[dict[str, Any]]:
+        return record_for(self.coordinator, self.imei).get("alarms") or []
+
+    @property
+    def native_value(self) -> Any:
+        alarms = self._alarms()
+        return dt_util.parse_datetime(alarms[0]["time"]) if alarms else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        alarms = self._alarms()
+        latest = alarms[0] if alarms else {}
+        return {
+            "alarm": latest.get("type"),
+            "alarm_code": latest.get("code"),
+            "latitude": latest.get("latitude"),
+            "longitude": latest.get("longitude"),
+            "total": len(alarms),
+            "first": alarms[-1]["time"] if alarms else None,
+            "counts": alarm_counts(alarms),
+            "recent": [
+                {
+                    "time": dt_util.as_local(dt_util.parse_datetime(alarm["time"])).isoformat(),
+                    "type": alarm["type"],
+                }
+                for alarm in alarms[:RECENT_ALARM_COUNT]
+            ],
+        }

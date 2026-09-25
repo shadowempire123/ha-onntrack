@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.9.0 — 2026-09-25
+
+### Added
+- **The alarm log from the Onntrack app.** A "Vibration alert" reached the
+  phone through the Onntrack app and never reached Home Assistant: vibration,
+  install and removal alarms are not part of `getMonitorInfo`, the only thing
+  the integration read, so the alert detection there could not see them. They
+  live in the portal's alarm report (`newReportAlarm/searchAlarmInfo`), which
+  is now read on every poll.
+  - The first run fetches the whole history the portal keeps -- on the
+    author's tracker 386 alarms back to its activation in June -- quietly,
+    without an event for each.
+  - Every alarm after that fires `onntrack_alert` with `field: portal_alarm`,
+    the kind in `value` and the alarm's own id, time and position.
+  - A new sensor `last_alarm` has the time of the newest alarm as its state,
+    so each one is a state change in the logbook, plus the last 50 and the
+    totals per kind as attributes. Those two are kept out of the recorder.
+  - `onntrack.get_alarms` returns the complete log.
+  - The log is stored per config entry and survives restarts; a failed alarm
+    request leaves it and the position sensors alone.
+
+### Notes
+- The portal writes its alarm times in the account's fixed offset
+  (`timeZones: GMT+02:00`), without daylight saving. Reading them as local
+  time would have put every winter alarm an hour off; they are converted with
+  that offset instead.
+- The report filters on alarm type codes and returns nothing when the filter
+  is empty, so the integration asks for the account's list of 224 types once
+  and sends all of them.
+
 ## 0.8.1 — 2026-09-16
 
 ### Fixed

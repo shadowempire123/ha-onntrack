@@ -83,6 +83,9 @@
       },
       "alert_count": {
         "name": "Alarme"
+      },
+      "last_alarm": {
+        "name": "Letzter Alarm"
       }
     },
     "device_tracker": {

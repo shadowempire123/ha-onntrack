@@ -5,11 +5,12 @@ import hashlib
 import re
 import time
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, tzinfo
 from typing import Any
 
 import aiohttp
 
+from .alarms import parse_alarm, portal_timezone
 from .const import VERSION
 
 API_PREFIX = "/v3/new"
@@ -263,6 +264,9 @@ class OnntrackApi:
         self._last_address: dict[str, str] = {}
         self._next_lookup = 0.0
         self._blocked_until = 0.0
+        # The account's fixed UTC offset; alarm times come back in it.
+        self.portal_timezone: tzinfo = portal_timezone(None)
+        self._alarm_codes: str | None = None
 
     async def _async_reverse_geocode(self, latitude: float, longitude: float) -> str | None:
         if not self.reverse_geocode:
@@ -368,6 +372,8 @@ class OnntrackApi:
         account_response = await self._request("GET", f"/account/current?timestamp={timestamp}")
         account_data = _nested_data(account_response)
         user_id = account_data.get("id") if isinstance(account_data, dict) else None
+        if isinstance(account_data, dict) and account_data.get("timeZones"):
+            self.portal_timezone = portal_timezone(account_data["timeZones"])
         if user_id in (None, ""):
             user_id = _first_value(account_data, {"id"})
         if user_id in (None, ""):
@@ -451,3 +457,55 @@ class OnntrackApi:
             },
         )
         return _extract_route_points(response)
+
+    async def _async_alarm_codes(self) -> str:
+        """Every alarm type the portal knows, as the comma list the report wants.
+
+        The report filters on these codes and returns nothing at all when the
+        filter is empty, so "all alarms" has to be spelled out. The list is the
+        same for the whole account and fetched once per session.
+        """
+        if self._alarm_codes is None:
+            response = await self._request("GET", "/newReportAlarm/getAllAlarmType")
+            data = _nested_data(response)
+            codes = [
+                str(item.get("alarmType") or item.get("id"))
+                for item in (data if isinstance(data, list) else [])
+                if isinstance(item, dict) and (item.get("alarmType") or item.get("id"))
+            ]
+            if not codes:
+                raise OnntrackApiError("Onntrack returned no alarm types")
+            self._alarm_codes = ",".join(codes)
+        return self._alarm_codes
+
+    async def async_get_alarms(self, imei: str, start: datetime, end: datetime) -> list[dict[str, Any]]:
+        """Alarms of one device between two aware datetimes, newest first."""
+        await self._async_ensure_login()
+        tz = self.portal_timezone
+        response = await self._request(
+            "POST",
+            "/newReportAlarm/searchAlarmInfo",
+            {
+                "imei": imei,
+                "startTime": start.astimezone(tz).strftime("%Y-%m-%d %H:%M:%S"),
+                "endTime": end.astimezone(tz).strftime("%Y-%m-%d %H:%M:%S"),
+                "startCreateTime": "",
+                "endCreateTime": "",
+                "mcType": "",
+                "isReadState": "",
+                "lowerLevel": 1,
+                "status": await self._async_alarm_codes(),
+                "searchType": "1",
+                # The portal pages on the client and hands back every row
+                # regardless; the fields are sent because the web app does.
+                "pageNo": 1,
+                "pageSize": 100,
+            },
+        )
+        data = _nested_data(response)
+        alarms = [parse_alarm(item, tz) for item in (data if isinstance(data, list) else [])]
+        return sorted(
+            (alarm for alarm in alarms if alarm is not None),
+            key=lambda alarm: alarm["time"],
+            reverse=True,
+        )

@@ -27,6 +27,27 @@ get_route:
       advanced: true
       selector:
         text:
+get_alarms:
+  name: Get alarms
+  description: >-
+    Return the alarm log (vibration, install, removal and the like) that
+    Home Assistant has collected from the portal, newest first.
+  fields:
+    imei:
+      name: IMEI
+      description: Optional IMEI; without it every device is returned.
+      required: false
+      selector:
+        text:
+    limit:
+      name: Limit
+      description: Optional maximum number of alarms per device.
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 5000
+          mode: box
 regenerate_route_token:
   name: Regenerate route token
   description: >-

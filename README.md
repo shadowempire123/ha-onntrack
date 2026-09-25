@@ -28,13 +28,38 @@ For every device on the account:
 | `sensor.<device>_address` | Street address of the current position |
 | `sensor.<device>_gnss`, `_visible_satellites`, `_cellular_signal_strength` | Reception quality |
 | `sensor.<device>_last_online`, `_last_fix` | Timestamps |
+| `sensor.<device>_last_alarm` | Time of the newest alarm from the portal's alarm log (vibration, install, removal ...); the recent ones in `recent`, totals per kind in `counts` |
 | `sensor.<device>_imei`, `_alerts` | Identity and active alert count |
 
 Sensors appear only when the portal actually reports the underlying value.
 
 Two events are fired on the bus: `onntrack_status_changed` when the portal
-status changes, and `onntrack_alert` when an alert becomes active or a device
-disappears from the account.
+status changes, and `onntrack_alert` when an alert becomes active, a new alarm
+appears in the portal's alarm log (`field: portal_alarm`, the kind in `value`),
+or a device disappears from the account.
+
+## The alarm log
+
+The alarms the Onntrack app pushes to the phone -- "Vibration alert", "Install
+alert", "Disassembly alert" and the rest -- are not part of the live data the
+position comes from. The integration reads them from the portal's alarm report
+instead, once per poll. On the first run it fetches the whole history the
+portal keeps, back to the day the tracker was activated, without firing an
+event for any of it; from then on only new alarms are announced. The log is
+stored in Home Assistant and survives restarts.
+
+`onntrack.get_alarms` returns the complete log, newest first:
+
+```yaml
+action: onntrack.get_alarms
+data:
+  imei: "123456789012345"   # optional
+  limit: 100                 # optional
+response_variable: alarms
+```
+
+The portal reports its timestamps in the account's fixed UTC offset, which does
+not follow daylight saving time. They are converted to UTC on the way in.
 
 ## Requirements
 

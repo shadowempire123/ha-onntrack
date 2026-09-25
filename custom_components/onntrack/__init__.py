@@ -29,6 +29,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     PLATFORMS,
+    SERVICE_GET_ALARMS,
     SERVICE_GET_ROUTE,
     SERVICE_REGENERATE_ROUTE_TOKEN,
 )
@@ -117,6 +118,33 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             "geojson_url": f"/api/onntrack/route/{map_id}?{credentials}&format=geojson&{period}",
         }
 
+    async def async_get_alarms(call: ServiceCall) -> ServiceResponse:
+        """Return the stored alarm log, newest first.
+
+        The sensor only carries the latest alarms; this is the whole history
+        the portal handed over, including the backfill.
+        """
+        imei = str(call.data.get("imei") or "").strip()
+        limit = call.data.get("limit")
+        devices = []
+        for coordinator in hass.data.get(DOMAIN, {}).values():
+            for device_imei, entry in coordinator.alarm_log.items():
+                if imei and device_imei != imei:
+                    continue
+                record = (coordinator.data or {}).get("devices", {}).get(device_imei, {})
+                alarms = entry.get("alarms", [])
+                devices.append(
+                    {
+                        "imei": device_imei,
+                        "device_name": record.get("device", {}).get("deviceName") or device_imei,
+                        "alarm_count": len(alarms),
+                        "alarms": alarms[:limit] if limit else alarms,
+                    }
+                )
+        if imei and not devices:
+            raise HomeAssistantError(f"No alarm log for IMEI {imei}")
+        return {"devices": devices}
+
     async def async_regenerate_route_token(call: ServiceCall) -> ServiceResponse:
         """Issue a new route token, invalidating every map link handed out so far.
 
@@ -167,6 +195,18 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     )
     hass.services.async_register(
         DOMAIN,
+        SERVICE_GET_ALARMS,
+        async_get_alarms,
+        schema=vol.Schema(
+            {
+                vol.Optional("imei"): cv.string,
+                vol.Optional("limit"): vol.All(vol.Coerce(int), vol.Range(min=1)),
+            }
+        ),
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
         SERVICE_REGENERATE_ROUTE_TOKEN,
         async_regenerate_route_token,
         schema=vol.Schema({vol.Optional("config_entry_id"): cv.string}),
@@ -213,8 +253,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         reverse_geocode=entry.options.get(CONF_REVERSE_GEOCODE, DEFAULT_REVERSE_GEOCODE),
     )
     coordinator = OnntrackCoordinator(
-        hass, api, entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        hass,
+        api,
+        entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+        alarm_store=Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}.alarms"),
     )
+    await coordinator.async_load_alarm_log()
     try:
         await coordinator.async_config_entry_first_refresh()
     except UpdateFailed as error:
