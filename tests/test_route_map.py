@@ -178,3 +178,32 @@ class TestPage:
         page = self.render()
         assert 'L.map("map", {zoomControl: false})' in page
         assert 'L.control.zoom({position: "bottomright"})' in page
+
+
+class TestPageLocale:
+    """Times follow Home Assistant's language, not the browser's."""
+
+    def page(self, **kwargs):
+        from onntrack.route_map import build_route_page
+
+        defaults = {
+            "map_id": "m",
+            "token": "t",
+            "device_name": "Van",
+            "start": "2026-09-01",
+            "end": "2026-09-25",
+        }
+        return build_route_page(**{**defaults, **kwargs})
+
+    def test_configured_language_is_used(self):
+        page = self.page(locale="de")
+        assert '<html lang="de">' in page
+        assert 'Intl.DateTimeFormat("de",' in page
+
+    def test_default_is_english(self):
+        assert 'Intl.DateTimeFormat("en",' in self.page()
+
+    def test_a_malformed_locale_cannot_break_out_of_the_script(self):
+        page = self.page(locale='de");alert(1);("')
+        assert "alert(1)" not in page
+        assert 'Intl.DateTimeFormat("en",' in page

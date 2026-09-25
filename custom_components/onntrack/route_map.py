@@ -174,8 +174,13 @@ def build_route_page(
     device_name: str,
     start: str,
     end: str,
+    locale: str = "en",
 ) -> str:
     """Render the route page.
+
+    ``locale`` is Home Assistant's configured language. Times on the page are
+    formatted with it rather than with the browser's, so an English browser
+    on a German installation does not show "3:50 PM".
 
     The page carries no coordinates of its own. It is served from a view that
     checks the route token and pulls every position from the route endpoint,
@@ -188,8 +193,10 @@ def build_route_page(
     initial_month = html.escape(start[:7])
     initial_start = html.escape(start[:10])
     initial_end = html.escape(end[:10])
+    # A BCP 47 tag or nothing; anything else would break the script.
+    safe_locale = locale if re.fullmatch(r"[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*", locale or "") else "en"
     page = f"""<!doctype html>
-<html lang="en">
+<html lang="{safe_locale}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -317,7 +324,7 @@ def build_route_page(
         function timeLabel(value) {{
             const parsed = new Date(value);
             if (Number.isNaN(parsed.getTime())) return value || "Unknown";
-            return new Intl.DateTimeFormat(undefined, {{dateStyle: "medium", timeStyle: "short"}}).format(parsed);
+            return new Intl.DateTimeFormat("{safe_locale}", {{dateStyle: "medium", timeStyle: "short"}}).format(parsed);
         }}
         function popupContent(title, lines) {{
             const content = document.createElement("div");

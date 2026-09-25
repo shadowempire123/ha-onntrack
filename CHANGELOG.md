@@ -2,6 +2,11 @@
 
 ## 0.9.0 — 2026-09-25
 
+### Fixed
+- **Times on the route map followed the browser, not Home Assistant.** An
+  English browser on a German installation showed "3:50 PM". The page now
+  formats with Home Assistant's configured language.
+
 ### Added
 - **Satellite view on the route map.** A layer switch in the bottom right
   corner toggles between OpenStreetMap and Esri World Imagery, which needs no

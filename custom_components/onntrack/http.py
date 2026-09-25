@@ -176,7 +176,14 @@ class OnntrackRouteMapView(HomeAssistantView):
         start = str(route.get("start") or today.replace(day=1).strftime("%Y-%m-%d"))
         end = str(route.get("end") or today.strftime("%Y-%m-%d"))
         return web.Response(
-            text=build_route_page(map_id, str(route.get("token") or ""), route["device_name"], start, end),
+            text=build_route_page(
+                map_id,
+                str(route.get("token") or ""),
+                route["device_name"],
+                start,
+                end,
+                locale=self._hass.config.language or "en",
+            ),
             content_type="text/html",
             headers={"Cache-Control": "no-store"},
         )
